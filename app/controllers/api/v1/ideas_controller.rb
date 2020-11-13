@@ -23,10 +23,22 @@ module Api
 
       # ES CREATE
       def create
-        binding.pry
         call_with_idea(IdeaDomain::Commands::CreateIdea)
         render :ok
       end
+
+      def create_idea
+        stream_name = "idea#{idea_params[:id]}"
+        event = IdeaDomain::Events::CreateIdea.new(data: {
+          id: idea_params[:id],
+          title: idea_params[:title],
+          body: idea_params[:body],
+        })
+
+        #publishing an event for a specific stream
+        Rails.configuration.event_store.publish(event, stream_name: stream_name)
+      end
+
 
       # ES SHOW
       def show
@@ -45,7 +57,7 @@ module Api
       end
 
       def idea_params
-        params.require(:idea).permit(:title, :body)
+        params.permit(:title, :body, :id, :idea_id)
       end
     end
   end
